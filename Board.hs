@@ -29,8 +29,10 @@ isSquare bd = all (\row -> length row == length bd) bd
 
 -- | Returns a specific row of the board.
 -- The input y is 1-based; the function adjusts for 0-based indexing.
-row :: Int -> [[Int]] -> [Int]
-row y bd = undefined
+row :: Int -> [[Int]] -> Either String [Int]
+row y bd 
+    | y <= 0 || y > length bd = Left "Row index out of bounds"
+    | otherwise = Right (bd !! (y - 1))  -- Adjust for 0-based indexing
 
 -- | Returns a specific column of the board.
 -- The input x is 1-based; the function adjusts for 0-based indexing.
