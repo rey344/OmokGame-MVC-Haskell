@@ -36,8 +36,11 @@ row y bd
 
 -- | Returns a specific column of the board.
 -- The input x is 1-based; the function adjusts for 0-based indexing.
-column :: Int -> [[Int]] -> [Int]
-column x bd = undefined
+column :: Int -> [[Int]] -> Either String [Int]
+column x bd 
+    | x <= 0 || x > length bd = Left "Column index out of bounds" 
+    | otherwise = Right [row !! (x - 1) | row <- bd] -- for each row in the board, get the  (x-1)-th element
+
 
 -- | Marks a position (x, y) for a player p on the board.
 -- Assumes the position is empty.
