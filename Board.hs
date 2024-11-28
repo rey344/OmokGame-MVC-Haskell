@@ -41,11 +41,17 @@ column x bd
     | x <= 0 || x > length bd = Left "Column index out of bounds" 
     | otherwise = Right [row !! (x - 1) | row <- bd] -- for each row in the board, get the  (x-1)-th element
 
-
 -- | Marks a position (x, y) for a player p on the board.
--- Assumes the position is empty.
-mark :: Int -> Int -> [[Int]] -> Int -> [[Int]]
-mark x y bd p = undefined
+-- Assumes 1-based indices and checks bounds and emptiness.
+mark :: Int -> Int -> [[Int]] -> Int -> Either String [[Int]]
+mark x y bd p
+    | x <= 0 || x > length bd || y <= 0 || y > length bd = Left "Position out of bounds"
+    | bd !! (y - 1) !! (x - 1) /= 0 = Left "Position already marked"
+    | otherwise = Right (replace y bd (replace x (bd !! (y - 1)) p))
+    where
+    -- Replaces the n-th element of the list (1-based index).
+    replace :: Int -> [a] -> a -> [a]
+    replace n xs val = take (n - 1) xs ++ [val] ++ drop n xs
 
 -- | Checks if a specific position (x, y) is empty.
 isEmpty :: Int -> Int -> [[Int]] -> Bool
