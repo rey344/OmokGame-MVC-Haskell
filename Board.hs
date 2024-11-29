@@ -1,5 +1,16 @@
 module Board where
 
+-- | Checks if the given (x, y) indices are within bounds of the board.
+checkBounds :: Int -> Int -> [[Int]] -> Either String ()
+checkBounds x y bd
+  | x <= 0 || x > length bd || y <= 0 || y > length bd = Left "Position out of bounds"
+  | otherwise = Right ()
+
+-- | Safely accesses the element at (x, y) on the board.
+-- Assumes 1-based indices and valid bounds.
+getElement :: Int -> Int -> [[Int]] -> Int
+getElement x y bd = (bd !! (y - 1)) !! (x - 1)
+
 -- | Creates an empty nxn board if n is positive; otherwise, returns an error.
 mkBoard :: Int -> Either String [[Int]]
 mkBoard n
@@ -37,46 +48,55 @@ row y bd
 -- | Returns a specific column of the board.
 -- The input x is 1-based; the function adjusts for 0-based indexing.
 column :: Int -> [[Int]] -> Either String [Int]
-column x bd 
-    | x <= 0 || x > length bd = Left "Column index out of bounds" 
-    | otherwise = Right [row !! (x - 1) | row <- bd] -- for each row in the board, get the  (x-1)-th element
+column x bd = 
+  case checkBounds x 1 bd of
+    Left err -> Left err
+    Right _ -> Right [row !! (x - 1) | row <- bd]
 
 -- | Marks a position (x, y) for a player p on the board.
 -- Assumes 1-based indices and checks bounds and emptiness.
 mark :: Int -> Int -> [[Int]] -> Int -> Either String [[Int]]
-mark x y bd p
-    | x <= 0 || x > length bd || y <= 0 || y > length bd = Left "Position out of bounds"
-    | bd !! (y - 1) !! (x - 1) /= 0 = Left "Position already marked"
-    | otherwise = Right (replace y bd (replace x (bd !! (y - 1)) p))
-    where
-    -- Replaces the n-th element of the list (1-based index).
+mark x y bd p =
+  case checkBounds x y bd of
+    Left err -> Left err
+    Right _ ->
+      if getElement x y bd /= 0
+        then Left "Position already marked"
+        else Right (replace y bd (replace x (bd !! (y - 1)) p))
+  where
     replace :: Int -> [a] -> a -> [a]
     replace n xs val = take (n - 1) xs ++ [val] ++ drop n xs
 
 -- | Checks if a specific position (x, y) is empty.
 -- Assumes 1-based indices.
 isEmpty :: Int -> Int -> [[Int]] -> Either String Bool
-isEmpty x y bd
-    | x <= 0 || x > length bd || y <= 0 || y > length bd = Left "Position out of bounds"
-    | otherwise = Right ((bd !! (y - 1)) !! (x -1) == 0)
+isEmpty x y bd =
+  case checkBounds x y bd of
+    Left err -> Left err
+    Right _ -> Right (getElement x y bd == 0)
 
 -- | Checks if a specific position (x, y) is marked.
 -- Assumes 1-based indices
 isMarked :: Int -> Int -> [[Int]] -> Either String Bool
-isMarked x y bd 
-    | x <= 0 || x > length bd || y <= 0 || y > length bd = Left "Position out of bounds"
-    | otherwise = Right ((bd !! (y - 1)) !! (x - 1) /= 0)
+isMarked x y bd =
+  case checkBounds x y bd of
+    Left err -> Left err
+    Right _ -> Right (getElement x y bd /= 0)
 
 -- | Checks if a specific position (x, y) is marked by a player p.
 -- Assumes 1-based indices
 isMarkedBy :: Int -> Int -> [[Int]] -> Int -> Either String Bool
-isMarkedBy x y bd p
-    | x <= 0 || x > length bd || y <= 0 || y > length bd = Left "Position out of bounds"
-    | otherwise = Right ((bd !! (y - 1)) !! (x - 1) == p)
+isMarkedBy x y bd p =
+  case checkBounds x y bd of
+    Left err -> Left err
+    Right _ -> Right (getElement x y bd == p)
 
--- | Returns the player who marked a specific position (x, y).
-marker :: Int -> Int -> [[Int]] -> Int
-marker x y bd = undefined
+marker :: Int -> Int -> [[Int]] -> Either String Int
+marker x y bd =
+  case checkBounds x y bd of
+    Left err -> Left err
+    Right _ -> Right (getElement x y bd)
+
 
 -- | Checks if the board is completely filled.
 isFull :: [[Int]] -> Bool
