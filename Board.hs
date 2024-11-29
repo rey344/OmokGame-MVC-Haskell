@@ -97,10 +97,9 @@ marker x y bd =
     Left err -> Left err
     Right _ -> Right (getElement x y bd)
 
-
 -- | Checks if the board is completely filled.
 isFull :: [[Int]] -> Bool
-isFull bd = undefined
+isFull bd = all (all (/= 0)) bd
 
 -- | Checks if a player p has won the game.
 isWonBy :: [[Int]] -> Int -> Bool
