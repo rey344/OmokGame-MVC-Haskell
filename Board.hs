@@ -54,8 +54,11 @@ mark x y bd p
     replace n xs val = take (n - 1) xs ++ [val] ++ drop n xs
 
 -- | Checks if a specific position (x, y) is empty.
-isEmpty :: Int -> Int -> [[Int]] -> Bool
-isEmpty x y bd = undefined
+-- Assumes 1-based indices.
+isEmpty :: Int -> Int -> [[Int]] -> Either String Bool
+isEmpty x y bd
+    | x <= 0 || x > length bd || y <= 0 || y > length bd = Left "Position out of bounds"
+    | otherwise = Right ((bd !! (y - 1)) !! (x -1) == 0)
 
 -- | Checks if a specific position (x, y) is marked.
 isMarked :: Int -> Int -> [[Int]] -> Bool
