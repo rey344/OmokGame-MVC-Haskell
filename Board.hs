@@ -61,14 +61,18 @@ isEmpty x y bd
     | otherwise = Right ((bd !! (y - 1)) !! (x -1) == 0)
 
 -- | Checks if a specific position (x, y) is marked.
+-- Assumes 1-based indices
 isMarked :: Int -> Int -> [[Int]] -> Either String Bool
 isMarked x y bd 
     | x <= 0 || x > length bd || y <= 0 || y > length bd = Left "Position out of bounds"
     | otherwise = Right ((bd !! (y - 1)) !! (x - 1) /= 0)
 
 -- | Checks if a specific position (x, y) is marked by a player p.
-isMarkedBy :: Int -> Int -> [[Int]] -> Int -> Bool
-isMarkedBy x y bd p = undefined
+-- Assumes 1-based indices
+isMarkedBy :: Int -> Int -> [[Int]] -> Int -> Either String Bool
+isMarkedBy x y bd p
+    | x <= 0 || x > length bd || y <= 0 || y > length bd = Left "Position out of bounds"
+    | otherwise = Right ((bd !! (y - 1)) !! (x - 1) == p)
 
 -- | Returns the player who marked a specific position (x, y).
 marker :: Int -> Int -> [[Int]] -> Int
