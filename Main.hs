@@ -1,6 +1,5 @@
 module Main where
 
-import System.IO (hFlush, stdout)
 import System.IO (hSetBuffering, hSetEcho, BufferMode(..), stdin)
 import System.Random (randomRIO)
 import Board
@@ -61,7 +60,7 @@ readXY bd player = do
     retry err = do
       putStrLn err
       readXY bd player
-      
+
 -- | Generates a random valid move for the computer.
 getRandomMove :: [[Int]] -> IO (Int, Int)
 getRandomMove bd = do
@@ -73,55 +72,73 @@ getRandomMove bd = do
 
 -- | Main function to play a game of Omok.
 main :: IO ()
-main = do
+main = gameLoop
+
+-- | Main game loop to allow replay or exit.
+gameLoop :: IO ()
+gameLoop = do
   putStrLn "Welcome to Omok!"
   putStrLn "Choose a game mode:"
   putStrLn "1. Player vs Player (PvP)"
   putStrLn "2. Player vs Computer (PvC)"
+  putStrLn "q. Quit"
   mode <- getLine
   case mode of
-    "1" -> startGame False  -- PvP mode
-    "2" -> startGame True   -- PvC mode
+    "1" -> startGame False >> promptReplay
+    "2" -> startGame True >> promptReplay
+    "q" -> putStrLn "Goodbye!"
     _   -> do
-      putStrLn "Invalid option. Please choose 1 or 2."
-      main
+      putStrLn "Invalid option. Please choose 1, 2, or q."
+      gameLoop
 
+-- | Start a new game in the selected mode.
 startGame :: Bool -> IO ()
 startGame isPvC = do
   case mkBoard 15 of
-    Left err -> do
-      putStrLn $ "Error creating board: " ++ err
-      return ()  -- Exit gracefully
+    Left err -> putStrLn $ "Error creating board: " ++ err
     Right board -> playGame board mkPlayer mkOpponent isPvC
-  where
-    playGame :: [[Int]] -> Int -> Int -> Bool -> IO ()
-    playGame bd p1 p2 isPvC = do
-      putStrLn $ boardToStr playerToChar bd
-      if isPvC && p1 == mkOpponent
-        then do
-          putStrLn "Computer's turn..."
-          (x, y) <- getRandomMove bd
-          case mark x y bd p1 of
-            Left err -> error ("Unexpected error: " ++ err)  -- This shouldn't happen for random valid moves
-            Right bd' -> 
-              if isWonBy bd' p1
-                then putStrLn $ "Player " ++ show p1 ++ " (" ++ [playerToChar p1] ++ ") wins!"
-                else if isDraw bd'
-                  then putStrLn "It's a draw!"
-                  else playGame bd' p2 p1 isPvC
-        else do
-          result <- readXY bd p1
-          case result of
-            Left quitMessage -> putStrLn quitMessage  -- Handle quit case
-            Right (x, y) -> case mark x y bd p1 of
-              Left err -> do
-                putStrLn $ "Error: " ++ err
-                putStrLn "Here's the current state of the board:"
-                putStrLn $ boardToStr playerToChar bd  -- Display the board again
-                playGame bd p1 p2 isPvC  -- Retry the same move
-              Right bd' -> 
-                if isWonBy bd' p1
-                  then putStrLn $ "Player " ++ show p1 ++ " (" ++ [playerToChar p1] ++ ") wins!"
-                  else if isDraw bd'
-                    then putStrLn "It's a draw!"
-                    else playGame bd' p2 p1 isPvC
+
+-- | Handles the replay prompt after a game ends or quits.
+promptReplay :: IO ()
+promptReplay = do
+  putStrLn "Do you want to play again? (y/n)"
+  choice <- getLine
+  case choice of
+    "y" -> gameLoop
+    "n" -> putStrLn "Thank you for playing Omok! Goodbye!"
+    _   -> do
+      putStrLn "Invalid input. Please enter 'y' or 'n'."
+      promptReplay
+
+-- | Core game logic, handles turns and win/draw checks.
+playGame :: [[Int]] -> Int -> Int -> Bool -> IO ()
+playGame bd p1 p2 isPvC = do
+  putStrLn $ boardToStr playerToChar bd
+  if isPvC && p1 == mkOpponent
+    then do
+      putStrLn "Computer's turn..."
+      (x, y) <- getRandomMove bd
+      case mark x y bd p1 of
+        Left err -> error ("Unexpected error: " ++ err)  -- This shouldn't happen for random valid moves
+        Right bd' -> 
+          if isWonBy bd' p1
+            then putStrLn $ "Player " ++ show p1 ++ " (" ++ [playerToChar p1] ++ ") wins!"
+            else if isDraw bd'
+              then putStrLn "It's a draw!"
+              else playGame bd' p2 p1 isPvC
+    else do
+      result <- readXY bd p1
+      case result of
+        Left quitMessage -> putStrLn quitMessage
+        Right (x, y) -> case mark x y bd p1 of
+          Left err -> do
+            putStrLn $ "Error: " ++ err
+            putStrLn "Here's the current state of the board:"
+            putStrLn $ boardToStr playerToChar bd  -- Display the board again
+            playGame bd p1 p2 isPvC  -- Retry the same move
+          Right bd' -> 
+            if isWonBy bd' p1
+              then putStrLn $ "Player " ++ show p1 ++ " (" ++ [playerToChar p1] ++ ") wins!"
+              else if isDraw bd'
+                then putStrLn "It's a draw!"
+                else playGame bd' p2 p1 isPvC
