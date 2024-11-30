@@ -144,8 +144,10 @@ isDraw bd = isFull bd && not (any (\p -> isWonBy bd p) [mkPlayer, mkOpponent])
 
 -- | Checks if the game is over.
 -- The game is over if it is either won or drawn.
+-- | Checks if the game is over.
+-- The game is over if it is either won or drawn.
 isGameOver :: [[Int]] -> Bool
-isGameOver bd = undefined
+isGameOver bd = isDraw bd || any (\p -> isWonBy bd p) [mkPlayer, mkOpponent]
 
 -- | Converts the board to a string representation for display.
 -- playerToChar is a function that maps players to characters ('O', 'X', '.').
