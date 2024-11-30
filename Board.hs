@@ -102,8 +102,32 @@ isFull :: [[Int]] -> Bool
 isFull bd = all (all (/= 0)) bd
 
 -- | Checks if a player p has won the game.
+-- | Checks if a player p has won the game.
 isWonBy :: [[Int]] -> Int -> Bool
-isWonBy bd p = undefined
+isWonBy bd p = any (checkLine p) (rows ++ columns ++ diagonals)
+  where
+    rows = bd
+    columns = transpose bd
+    diagonals = getDiagonals bd
+
+    -- | Checks if a line (row, column, or diagonal) contains 5 consecutive marks of player p.
+    checkLine :: Int -> [Int] -> Bool
+    checkLine player line = any (all (== player)) (windows 5 line)
+
+    -- | Creates sliding windows of size n from a list.
+    windows :: Int -> [a] -> [[a]]
+    windows n xs
+      | length xs < n = []
+      | otherwise = take n xs : windows n (tail xs)
+
+    -- | Extracts all diagonals (both left-to-right and right-to-left) from the board.
+    getDiagonals :: [[Int]] -> [[Int]]
+    getDiagonals b = leftDiags ++ rightDiags
+      where
+        leftDiags = [ [b !! (i + k) !! (j + k) | k <- [0 .. min (m - i - 1) (n - j - 1)]] | i <- [0 .. m - 1], j <- [0 .. n - 1] ]
+        rightDiags = [ [b !! (i + k) !! (j - k) | k <- [0 .. min (m - i - 1) j]] | i <- [0 .. m - 1], j <- [0 .. n - 1] ]
+        m = length b
+        n = length (head b)
 
 -- | Checks if the game ended in a draw.
 isDraw :: [[Int]] -> Bool
