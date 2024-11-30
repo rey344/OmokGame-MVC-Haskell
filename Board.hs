@@ -150,6 +150,16 @@ isGameOver :: [[Int]] -> Bool
 isGameOver bd = isDraw bd || any (\p -> isWonBy bd p) [mkPlayer, mkOpponent]
 
 -- | Converts the board to a string representation for display.
--- playerToChar is a function that maps players to characters ('O', 'X', '.').
+-- playerToChar maps players to characters ('O', 'X', '.').
 boardToStr :: (Int -> Char) -> [[Int]] -> String
-boardToStr playerToChar bd = undefined
+boardToStr playerToChar bd =
+  unlines $
+    ["     " ++ concatMap (\x -> pad x ++ " ") [1 .. n]] ++
+    ["     " ++ replicate (4 * n - 1) '-'] ++
+    zipWith formatRow [1 ..] bd
+  where
+    n = length bd
+    pad x = if x < 10 then " " ++ show x else show x
+    formatRow y row =
+      pad y ++ "  | " ++ concatMap (\c -> " " ++ [playerToChar c] ++ " ") row
+
