@@ -1,4 +1,6 @@
 module Board where
+import Data.List (transpose)
+import Data.Maybe (listToMaybe)
 
 -- | Checks if the given (x, y) indices are within bounds of the board.
 checkBounds :: Int -> Int -> [[Int]] -> Either String ()
@@ -102,7 +104,6 @@ isFull :: [[Int]] -> Bool
 isFull bd = all (all (/= 0)) bd
 
 -- | Checks if a player p has won the game.
--- | Checks if a player p has won the game.
 isWonBy :: [[Int]] -> Int -> Bool
 isWonBy bd p = any (checkLine p) (rows ++ columns ++ diagonals)
   where
@@ -114,24 +115,32 @@ isWonBy bd p = any (checkLine p) (rows ++ columns ++ diagonals)
     checkLine :: Int -> [Int] -> Bool
     checkLine player line = any (all (== player)) (windows 5 line)
 
-    -- | Creates sliding windows of size n from a list.
-    windows :: Int -> [a] -> [[a]]
-    windows n xs
-      | length xs < n = []
-      | otherwise = take n xs : windows n (tail xs)
+ -- | Creates sliding windows of size n from a list.
+windows :: Int -> [a] -> [[a]]
+windows n xs
+  | length xs < n = []
+  | otherwise = take n xs : windows n (drop 1 xs)
 
-    -- | Extracts all diagonals (both left-to-right and right-to-left) from the board.
-    getDiagonals :: [[Int]] -> [[Int]]
-    getDiagonals b = leftDiags ++ rightDiags
-      where
-        leftDiags = [ [b !! (i + k) !! (j + k) | k <- [0 .. min (m - i - 1) (n - j - 1)]] | i <- [0 .. m - 1], j <- [0 .. n - 1] ]
-        rightDiags = [ [b !! (i + k) !! (j - k) | k <- [0 .. min (m - i - 1) j]] | i <- [0 .. m - 1], j <- [0 .. n - 1] ]
-        m = length b
-        n = length (head b)
+-- | Extracts all diagonals (both left-to-right and right-to-left) from the board.
+getDiagonals :: [[Int]] -> [[Int]]
+getDiagonals [] = []  -- Handle empty board
+getDiagonals b
+  | null (headSafe b) = []  -- Guard against empty rows
+  | otherwise = leftDiags ++ rightDiags
+  where
+    leftDiags = [ [b !! (i + k) !! (j + k) | k <- [0 .. min (m - i - 1) (n - j - 1)]] | i <- [0 .. m - 1], j <- [0 .. n - 1] ]
+    rightDiags = [ [b !! (i + k) !! (j - k) | k <- [0 .. min (m - i - 1) j]] | i <- [0 .. m - 1], j <- [0 .. n - 1] ]
+    m = length b
+    n = maybe 0 length (listToMaybe b)  -- Safely get the length of the first row
+
+-- | A safer version of `head` using `Maybe`.
+headSafe :: [[a]] -> [a]
+headSafe [] = []
+headSafe (x:_) = x
 
 -- | Checks if the game ended in a draw.
 isDraw :: [[Int]] -> Bool
-isDraw bd = undefined
+isDraw bd = isFull bd && not (any (\p -> isWonBy bd p) [mkPlayer, mkOpponent])
 
 -- | Checks if the game is over.
 -- The game is over if it is either won or drawn.
